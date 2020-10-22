@@ -31,7 +31,9 @@ df <- df %>%
     number_of_indeterminates = numberofindeterminates
   ) %>% 
   dplyr::mutate(
-    new_cases = confirmed_cases - dplyr::lag(confirmed_cases)
+    new_cases = confirmed_cases - dplyr::lag(confirmed_cases), 
+    new_people_tested = people_tested - dplyr::lag(people_tested), 
+    new_deaths = total_deaths - dplyr::lag(total_deaths)
   ) %>% 
   dplyr::select(
     -c(
@@ -51,8 +53,6 @@ ui <- shiny::navbarPage(
   theme = shinythemes::shinytheme(theme = "superhero"), 
   
   collapsible = TRUE, 
-
-
   
   shiny::tabPanel(
     
@@ -78,7 +78,7 @@ ui <- shiny::navbarPage(
           
           shiny::column(
             
-            width = 3, 
+            width = 2, 
             
             shiny::radioButtons(
               inputId = "select_var", 
@@ -108,7 +108,7 @@ ui <- shiny::navbarPage(
           
           shiny::column(
             
-            width = 9, 
+            width = 10, 
             
             shiny::tabsetPanel(
               
@@ -116,6 +116,7 @@ ui <- shiny::navbarPage(
                 title = "Calendar", 
                 
                 shiny::wellPanel(
+                  style = "background: #F0F0F0", 
                   echarts4r::echarts4rOutput(
                     outputId = "calendar_heatmap"
                   )
@@ -124,7 +125,15 @@ ui <- shiny::navbarPage(
               ), 
               
               shiny::tabPanel(
-                title = "Bar Chart"
+                title = "Bar Chart", 
+                
+                shiny::wellPanel(
+                  style = "background: #F0F0F0", 
+                  echarts4r::echarts4rOutput(
+                    outputId = "bar_chart"
+                  )
+                )
+                
               ), 
               
               type = "pills"
@@ -135,6 +144,36 @@ ui <- shiny::navbarPage(
             
           )
           
+        )
+        
+      )
+      
+    )
+    
+  ), 
+  
+  shiny::tabPanel(
+    
+    title = "About", 
+    
+    shiny::fluidRow(
+      
+      shiny::column(
+        width = 12, 
+        
+        shiny::div(
+          class = "jumbotron", 
+          shiny::h1("Enjoying This App?"), 
+          shiny::p(
+            class = "lead", 
+            "Check out what else Ketchbrook Analytics can do for you."
+          ), 
+          shiny::a(
+            class = "btn btn-info btn-lg", 
+            href = "https://www.ketchbrookanalytics.com/", 
+            target = "_blank", 
+            "Visit Us"
+          )
         )
         
       )
@@ -159,6 +198,16 @@ server <- function(input, output, session) {
       var = input$select_var
     )
 
+  })
+  
+  # Build the calendar heatmap visual 
+  output$bar_chart <- echarts4r::renderEcharts4r({
+    
+    generate_bar_chart(
+      data = df,
+      var = input$select_var
+    )
+    
   })
   
   

@@ -1,18 +1,12 @@
 generate_calendar_viz <- function(data, var) {
   
-  var_sym <- var %>% 
+  var_name <- var %>% 
     stringr::str_replace_all(" ", "_") %>% 
-    stringr::str_to_lower() %>% 
-    rlang::sym()
+    stringr::str_to_lower()
+  
+  var_sym <- rlang::sym(var_name)
   
   var_quo <- rlang::enquo(var_sym)
-  
-  var_name <- rlang::quo_name(var_quo)
-  
-  var_name_chart <- var_quo %>% 
-    dplyr::quo_name() %>% 
-    stringr::str_replace("_", " ") %>% 
-    tools::toTitleCase()
   
   max_val <- data %>% 
     dplyr::pull(!! var_quo) %>% 
@@ -27,10 +21,9 @@ generate_calendar_viz <- function(data, var) {
         format(lubridate::today() %m-% months(6), "%Y-%m")
       )
     ) %>% 
-    echarts4r::e_heatmap_(var_name, coord_system = "calendar", name = var_name_chart) %>% 
+    echarts4r::e_heatmap_(var_name, coord_system = "calendar", name = var) %>% 
     echarts4r::e_visual_map_(serie = var_name) %>%
-    echarts4r::e_title(var_name_chart, "Heatmap") %>% 
-    # echarts4r::e_tooltip(trigger = "item") %>%
+    echarts4r::e_title(var, "Heatmap") %>% 
     echarts4r::e_tooltip(
       formatter = htmlwidgets::JS("
         function(params){
@@ -38,7 +31,22 @@ generate_calendar_viz <- function(data, var) {
         }
       ")
     ) %>%
-    # echarts4r::e_show_loading() #%>%
     echarts4r::e_brush(throttleDelay = 1000)
+  
+}
+
+
+generate_bar_chart <- function(data, var) {
+  
+  var_name <- var %>% 
+    stringr::str_replace_all(" ", "_") %>% 
+    stringr::str_to_lower()
+  
+  # Line & Bar
+  data %>% 
+    tidyr::drop_na() %>% 
+    echarts4r::e_chart(x = date) %>% 
+    echarts4r::e_bar_(serie = var_name, name = var) %>% 
+    echarts4r::e_tooltip(trigger = "item")
   
 }
