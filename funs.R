@@ -38,7 +38,7 @@ generate_calendar_viz <- function(data, var) {
         }
       ")
     ) %>%
-    # echarts4r::e_show_loading() %>% 
+    # echarts4r::e_show_loading() #%>%
     echarts4r::e_brush(throttleDelay = 1000)
   
 }

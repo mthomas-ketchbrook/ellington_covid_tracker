@@ -34,7 +34,7 @@ plot_data %>%
   echarts4r::e_line(serie = confirmed_cases, smooth = TRUE)
 
 # Line & Bar
-plot_data %>% 
+df %>% 
   tidyr::drop_na() %>% 
   echarts4r::e_chart(x = date) %>% 
   echarts4r::e_line(serie = confirmed_cases, name = "Cumulative Cases", smooth = TRUE) %>% 
