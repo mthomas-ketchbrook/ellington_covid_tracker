@@ -14,6 +14,8 @@ generate_calendar_viz <- function(data, var) {
   
   # calendar heatmap
   data %>% 
+    dplyr::select("date", var_name) %>% 
+    tidyr::drop_na() %>% 
     echarts4r::e_charts(date) %>% 
     echarts4r::e_calendar(
       range = c(
@@ -42,11 +44,28 @@ generate_bar_chart <- function(data, var) {
     stringr::str_replace_all(" ", "_") %>% 
     stringr::str_to_lower()
   
-  # Line & Bar
+  # Bar Chart
   data %>% 
+    dplyr::select("date", var_name) %>% 
     tidyr::drop_na() %>% 
     echarts4r::e_chart(x = date) %>% 
     echarts4r::e_bar_(serie = var_name, name = var) %>% 
     echarts4r::e_tooltip(trigger = "item")
+  
+}
+
+
+generate_area_chart <- function(data, var) {
+  
+  var_name <- var %>% 
+    stringr::str_replace_all(" ", "_") %>% 
+    stringr::str_to_lower()
+  
+  data %>% 
+    dplyr::select("date", var_name) %>% 
+    tidyr::drop_na() %>% 
+    echarts4r::e_chart(x = date) %>% 
+    echarts4r::e_area_(serie = var_name, name = var) %>% 
+    echarts4r::e_tooltip(trigger = "axis")
   
 }
