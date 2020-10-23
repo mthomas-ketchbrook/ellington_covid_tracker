@@ -73,23 +73,59 @@ ui <- shiny::navbarPage(
       logo = "Ketchbrook_Logo_nobackground_cropped.png"
     ), 
     
-    shiny::sidebarLayout(
+    shiny::fluidRow(
       
-      sidebarPanel = sidebarPanel(
+      shiny::column(
         
-        shiny::titlePanel("Choose Chart Elements to Include"), 
+        width = 6, 
         
-        shiny::fluidRow(
+        create_info_card(
+          header = "Data as of", 
+          main = paste0(format(max(df$date), "%B %d")), 
+          subtext = "More recent data is subject to change", 
+          fill = "#D9534F"
+        )
+        
+      ), 
+      
+      shiny::column(
+        
+        width = 6, 
+        
+        create_info_card(
+          header = "Test Positivity Rate", 
+          main = df %>% 
+            dplyr::filter(date == max(date)) %>% 
+            dplyr::mutate(test_positivity_rate = (number_of_positives / number_of_tests) * 100) %>% 
+            dplyr::pull(test_positivity_rate) %>% 
+            round(2) %>% 
+            paste0("%"), 
+          subtext = "Calculated using the total number of tests divided by the total number of positive tests", 
+          fill = "#D9534F"
+        )
+        
+      )
+      
+    ), 
+    
+    shiny::hr(), 
+    
+    # Filters & Graphs - Cumulative ----
+    shiny::fluidRow(
+      
+      shiny::column(
+        
+        width = 3, 
+        
+        shiny::h3(""), 
+        
+        shiny::wellPanel(
           
-          # shiny::column(
-          #   
-          #   width = 2, 
-          
-          shiny::h4("Select Variable to Display in Cumulative Charts"), 
+          shiny::h2("Choose Metric to Display in the Chart"), 
           
           shiny::selectInput(
             inputId = "select_var_1", 
-            label = "Select Cumulative Variable", 
+            label = "Select Cumulative Metric to Display", 
             choices = df %>% 
               dplyr::select(
                 -c(
@@ -105,15 +141,45 @@ ui <- shiny::navbarPage(
               tools::toTitleCase(), 
             selected = "Total Cases", 
             multiple = FALSE
-          ), 
+          )
           
-          shiny::hr(), 
+        )
+        
+      ), 
+      
+      shiny::column(
+        
+        width = 9, 
+        
+        shiny::h3("Cumulative Statistics"), 
+        
+        shiny::wellPanel(
+          style = "background: #F0F0F0", 
+          echarts4r::echarts4rOutput(
+            outputId = "area_chart"
+          )
+        )
+        
+      )
+      
+    ), 
+    
+    shiny::hr(), 
+    
+    # Filters & Graphs - Non-Cumulative ----
+    shiny::fluidRow(
+      
+      shiny::column(
+        
+        width = 3, 
+        
+        shiny::wellPanel(
           
-          shiny::h4("Select Variable to Display in Non-Cumulative Charts"), 
+          shiny::h2("Choose Metric to Display in the Non-Cumulative Charts"), 
           
           shiny::selectInput(
             inputId = "select_var_2", 
-            label = "Select Non-Cumulative Variable", 
+            label = "Select Non-Cumulative Metric", 
             choices = df %>% 
               dplyr::select(
                 new_cases, 
@@ -132,63 +198,34 @@ ui <- shiny::navbarPage(
         
       ), 
       
-      mainPanel = shiny::mainPanel(
+      shiny::column(
         
-        shiny::fluidRow(
+        width = 9, 
+        
+        shiny::h3("Non-Cumulative Statistics"), 
+        
+        shiny::tabsetPanel(
           
-          shiny::column(
-            
-            width = 12, 
-            
-            shiny::h3("Cumulative Statistics"), 
+          shiny::tabPanel(
+            title = "Calendar", 
             
             shiny::wellPanel(
               style = "background: #F0F0F0", 
               echarts4r::echarts4rOutput(
-                outputId = "area_chart"
+                outputId = "calendar_heatmap"
               )
-            ), 
-          
-          shiny::hr(), 
-          
-          shiny::fluidRow(
-            
-            # shiny::column(
-            # 
-            #   width = 8,
-            
-            shiny::h3("Non-Cumulative Statistics"), 
-            
-            shiny::tabsetPanel(
-              
-              shiny::tabPanel(
-                title = "Calendar", 
-                
-                shiny::wellPanel(
-                  style = "background: #F0F0F0", 
-                  echarts4r::echarts4rOutput(
-                    outputId = "calendar_heatmap"
-                  )
-                )
-                
-              ), 
-              
-              shiny::tabPanel(
-                title = "Bar Chart", 
-                
-                shiny::wellPanel(
-                  style = "background: #F0F0F0", 
-                  echarts4r::echarts4rOutput(
-                    outputId = "bar_chart"
-                  )
-                )
-                
-              ), 
-              
-              type = "pills"
-              
             )
             
+          ), 
+          
+          shiny::tabPanel(
+            title = "Bar Chart", 
+            
+            shiny::wellPanel(
+              style = "background: #F0F0F0", 
+              echarts4r::echarts4rOutput(
+                outputId = "bar_chart"
+              )
             )
             
           )
@@ -268,16 +305,6 @@ server <- function(input, output, session) {
     )
     
   })
-  
-  # Build the liquid chart
-  # output$liquid_viz <- echarts4r::renderEcharts4r({
-  #   
-  #   df %>% 
-  #     dplyr::filter(date == max(date)) %>% 
-  #     echarts4r::e_charts() %>% 
-  #     echarts4r::e_liquid(serie = test_positivity_rate)
-  #     
-  # })
   
   
 }
