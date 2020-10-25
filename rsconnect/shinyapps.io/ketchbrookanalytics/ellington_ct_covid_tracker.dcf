@@ -1,0 +1,13 @@
+name: ellington_ct_covid_tracker
+title: ellington_ct_covid_tracker
+username:
+account: ketchbrookanalytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3089011
+bundleId: 3778870
+url: https://ketchbrookanalytics.shinyapps.io/ellington_ct_covid_tracker/
+when: 1603588573.41005
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: analysis.R|tmp_data.csv|scripts/cumulative_ui.R
