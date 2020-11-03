@@ -37,7 +37,13 @@ plot_data %>%
 # echarts4r
 plot_data %>% 
   echarts4r::e_chart(x = date) %>% 
-  echarts4r::e_area(serie = confirmed_cases, smooth = TRUE) %>% 
+  echarts4r::e_bar_(serie = "confirmed_cases") %>% #, smooth = TRUE) %>% 
+  echarts4r::e_datazoom() %>%
+  echarts4r::e_zoom(
+    dataZoomIndex = 0,
+    startValue = max(plot_data$date) %m-% months(3),
+    endValue = max(plot_data$date)
+  ) %>%
   echarts4r::e_tooltip(trigger = "axis")
 
 # Line & Bar
