@@ -50,7 +50,7 @@ df <- df %>%
     )
   )
 
-
+# Create UI
 ui <- shiny::navbarPage(
   
   title = "Ellington, CT COVID-19 Tracker", 
@@ -109,7 +109,6 @@ ui <- shiny::navbarPage(
     ), 
     
     shiny::hr(), 
-    
     
     
     # Filters & Graphs - Cumulative ----
@@ -185,7 +184,9 @@ ui <- shiny::navbarPage(
               )
             )
             
-          )
+          ), 
+          
+          shiny::p("By default, last 4 months are shown; to change this, move the slider below the chart.")
           
         )
         
@@ -261,7 +262,9 @@ ui <- shiny::navbarPage(
               echarts4r::echarts4rOutput(
                 outputId = "bar_chart_2"
               )
-            )
+            ), 
+            
+            shiny::p("By default, last 4 months are shown; to change this, move the slider below the chart.")
             
           )
           

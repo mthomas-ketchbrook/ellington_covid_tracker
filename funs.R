@@ -20,16 +20,16 @@ generate_calendar_viz <- function(data, var) {
     echarts4r::e_calendar(
       range = c(
         format(lubridate::today() %m+% months(1), "%Y-%m"), 
-        format(lubridate::today() %m-% months(6), "%Y-%m")
+        format(lubridate::today() %m-% months(4), "%Y-%m")
       )
     ) %>% 
     echarts4r::e_heatmap_(var_name, coord_system = "calendar", name = var) %>% 
     echarts4r::e_visual_map_(serie = var_name) %>%
-    echarts4r::e_title(var, "Heatmap") %>% 
+    echarts4r::e_title(var, "Last 4 Months") %>% 
     echarts4r::e_tooltip(
       formatter = htmlwidgets::JS("
         function(params){
-          return('date: ' + params.value[0] + '<br />value: ' + params.value[1])
+          return(params.value[0] + '<br />value: ' + params.value[1])
         }
       ")
     ) %>% 
@@ -51,7 +51,13 @@ generate_bar_chart <- function(data, var) {
     tidyr::drop_na() %>% 
     echarts4r::e_chart(x = date) %>% 
     echarts4r::e_bar_(serie = var_name, name = var) %>% 
-    echarts4r::e_tooltip(trigger = "item") %>% 
+    echarts4r::e_datazoom() %>%
+    echarts4r::e_zoom(
+      dataZoomIndex = 0,
+      startValue = max(plot_data$date) %m-% months(4),
+      endValue = max(plot_data$date)
+    ) %>%
+    echarts4r::e_tooltip(trigger = "axis") %>% 
     e_toolbox_feature(feature = "saveAsImage")
   
 }
@@ -68,6 +74,12 @@ generate_area_chart <- function(data, var) {
     tidyr::drop_na() %>% 
     echarts4r::e_chart(x = date) %>% 
     echarts4r::e_area_(serie = var_name, name = var) %>% 
+    echarts4r::e_datazoom() %>%
+    echarts4r::e_zoom(
+      dataZoomIndex = 0,
+      startValue = max(plot_data$date) %m-% months(4),
+      endValue = max(plot_data$date)
+    ) %>%
     echarts4r::e_tooltip(trigger = "axis") %>% 
     e_toolbox_feature(feature = "saveAsImage")
   
