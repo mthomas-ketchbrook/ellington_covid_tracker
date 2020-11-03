@@ -54,8 +54,8 @@ generate_bar_chart <- function(data, var) {
     echarts4r::e_datazoom() %>%
     echarts4r::e_zoom(
       dataZoomIndex = 0,
-      startValue = max(plot_data$date) %m-% months(4),
-      endValue = max(plot_data$date)
+      startValue = max(data$date) %m-% months(4),
+      endValue = max(data$date)
     ) %>%
     echarts4r::e_tooltip(trigger = "axis") %>% 
     e_toolbox_feature(feature = "saveAsImage")
@@ -77,8 +77,8 @@ generate_area_chart <- function(data, var) {
     echarts4r::e_datazoom() %>%
     echarts4r::e_zoom(
       dataZoomIndex = 0,
-      startValue = max(plot_data$date) %m-% months(4),
-      endValue = max(plot_data$date)
+      startValue = max(data$date) %m-% months(4),
+      endValue = max(data$date)
     ) %>%
     echarts4r::e_tooltip(trigger = "axis") %>% 
     e_toolbox_feature(feature = "saveAsImage")
