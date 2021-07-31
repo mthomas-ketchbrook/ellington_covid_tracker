@@ -2,12 +2,51 @@ library(RSocrata)
 library(dplyr)
 library(ggplot2)
 library(echarts4r)
+library(glue)
 
-df <- RSocrata::read.socrata(
-  url = "https://data.ct.gov/resource/28fr-iqnx.csv?Town=Ellington"
+
+# General Socrata API documentation can be found here:
+# - https://dev.socrata.com/docs/endpoints.html
+
+# API Docs for these datasets:
+# - https://dev.socrata.com/foundry/data.ct.gov/28fr-iqnx
+# - https://dev.socrata.com/foundry/data.ct.gov/gngw-ukpw
+
+
+rate_cols <- paste(
+  "lastupdatedate", 
+  "towntotalcases", 
+  "townconfirmedcases", 
+  "towntotaldeaths", 
+  "peopletested", 
+  "numberoftests", 
+  "numberofpositives", 
+  "numberofnegatives", 
+  sep = ", "
 )
 
+df <- RSocrata::read.socrata(
+  url = glue::glue(
+    "https://data.ct.gov/resource/28fr-iqnx.csv?", 
+    # filter for Ellington
+    "town=Ellington&", 
+    # select only desired columns
+    "$select={rate_cols}"
+  )
+)
+
+vax_data <- RSocrata::read.socrata(
+  url = glue::glue(
+    "https://data.ct.gov/resource/gngw-ukpw.csv?", 
+    "Town=Ellington&", 
+    "$select=age_group, fully_vaccinated_percent, dateupdated"
+  )
+)
+
+
+
 plot_data <- df %>% 
+  tibble::as_tibble() %>% 
   dplyr::mutate(date = as.Date(lastupdatedate)) %>% 
   dplyr::rename(
     confirmed_cases = townconfirmedcases, 
@@ -21,7 +60,9 @@ plot_data <- df %>%
     number_of_positives
   ) %>% 
   dplyr::mutate(
-    new_cases = confirmed_cases - dplyr::lag(confirmed_cases)
+    new_cases = confirmed_cases - dplyr::lag(confirmed_cases)#, 
+    # new_tests = number_of_tests - dplyr::lag(number_of_tests), 
+    # new_positives = number_of_positives - dplyr::lag(number_of_positives)
   ) %>% 
   tidyr::drop_na()
 
