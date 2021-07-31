@@ -11,8 +11,28 @@ source("funs.R")
 source("scripts/definitions.R")
 source("scripts/get_definition.R")
 
+# token <- readLines("api_token.txt", warn = FALSE)
+
+df_cols <- paste(
+  "lastupdatedate", 
+  "towntotalcases", 
+  "townconfirmedcases", 
+  "towntotaldeaths", 
+  "peopletested", 
+  "numberoftests", 
+  "numberofpositives", 
+  "numberofnegatives", 
+  sep = ", "
+)
+
 df <- RSocrata::read.socrata(
-  url = "https://data.ct.gov/resource/28fr-iqnx.csv?Town=Ellington"
+  url = glue::glue(
+    "https://data.ct.gov/resource/28fr-iqnx.csv?", 
+    # filter for Ellington
+    "town=Ellington&", 
+    # select only desired columns
+    "$select={df_cols}"
+  )
 )
 
 # df <- read.csv("tmp_data.csv")
@@ -35,20 +55,19 @@ df <- df %>%
     new_people_tested = people_tested - dplyr::lag(people_tested), 
     new_positive_tests = number_of_positives - dplyr::lag(number_of_positives), 
     new_deaths = total_deaths - dplyr::lag(total_deaths)
-  ) %>% 
-  dplyr::select(
-    -c(
-      lastupdatedate, 
-      town_no, 
-      town, 
-      towncaserate, 
-      ratetested100k, 
-      townprobabledeaths, 
-      townprobablecases, 
-      townconfirmeddeaths, 
-      numberofindeterminates
-    )
   )
+
+
+vax_data <- RSocrata::read.socrata(
+  url = glue::glue(
+    "https://data.ct.gov/resource/gngw-ukpw.csv?", 
+    "Town=Ellington&", 
+    "$select=age_group, fully_vaccinated_percent, dateupdated"
+  )
+) %>% 
+  dplyr::mutate(dateupdated = as.Date(dateupdated)) %>% 
+  dplyr::filter(dateupdated == max(dateupdated))
+
 
 # Create UI
 ui <- shiny::navbarPage(
@@ -77,12 +96,12 @@ ui <- shiny::navbarPage(
       
       shiny::column(
         
-        width = 6, 
+        width = 3, 
         
         create_info_card(
-          header = "Data as of", 
-          main = paste0(format(max(df$date), "%B %d, %Y")), 
-          subtext = "More recent data is subject to change", 
+          header = paste0("Age Group: ", vax_data$age_group[4]), 
+          main = paste0(vax_data$fully_vaccinated_percent[4], "%"), 
+          subtext = "of residents fully vaccinated", 
           fill = "#D9534F"
         )
         
@@ -90,18 +109,126 @@ ui <- shiny::navbarPage(
       
       shiny::column(
         
-        width = 6, 
+        width = 3, 
         
         create_info_card(
-          header = "Total Test Positivity Rate", 
-          main = df %>% 
-            dplyr::filter(date == max(date)) %>% 
-            dplyr::mutate(test_positivity_rate = (number_of_positives / number_of_tests) * 100) %>% 
-            dplyr::pull(test_positivity_rate) %>% 
-            round(2) %>% 
-            paste0("%"), 
-          subtext = "Calculated using the total positive tests divided by the total tests", 
+          header = paste0("Age Group: ", vax_data$age_group[3]), 
+          main = paste0(vax_data$fully_vaccinated_percent[3], "%"), 
+          subtext = "of residents fully vaccinated", 
           fill = "#D9534F"
+        )
+        
+      ), 
+      
+      shiny::column(
+        
+        width = 3, 
+        
+        create_info_card(
+          header = paste0("Age Group: ", vax_data$age_group[2]), 
+          main = paste0(vax_data$fully_vaccinated_percent[2], "%"), 
+          subtext = "of residents fully vaccinated", 
+          fill = "#D9534F"
+        )
+        
+      ), 
+      
+      shiny::column(
+        
+        width = 3, 
+        
+        create_info_card(
+          header = paste0("Age Group: ", vax_data$age_group[1]), 
+          main = paste0(vax_data$fully_vaccinated_percent[1], "%"), 
+          subtext = "of residents fully vaccinated", 
+          fill = "#D9534F"
+        )
+        
+      )
+      
+    ), 
+    
+    shiny::p(
+      paste0(
+        "Vaccination rates are current as of ", 
+        format(vax_data$dateupdated[1], "%B %d, %Y")
+      )
+    ), 
+    
+    shiny::hr(), 
+    
+    # Filters & Graphs - Non-Cumulative ----
+    shiny::fluidRow(
+      
+      shiny::column(
+        
+        width = 3, 
+        
+        shiny::wellPanel(
+          
+          shiny::h2("Choose Metric to Display in the Chart"), 
+          
+          shiny::selectInput(
+            inputId = "select_var_2", 
+            label = "Select Non-Cumulative Metric", 
+            choices = df %>% 
+              dplyr::select(
+                new_cases, 
+                new_confirmed_cases, 
+                new_people_tested, 
+                new_tests, 
+                new_positive_tests, 
+                new_deaths
+              ) %>% 
+              colnames() %>% 
+              stringr::str_replace_all("_", " ") %>% 
+              tools::toTitleCase(), 
+            selected = "New Cases", 
+            multiple = FALSE
+          ),
+          
+          shiny::br(), 
+          
+          shiny::uiOutput(outputId = "defs_ui_2")
+          
+        )
+        
+      ), 
+      
+      shiny::column(
+        
+        width = 9, 
+        
+        shiny::h3("Non-Cumulative Statistics"), 
+        
+        shiny::tabsetPanel(
+          
+          shiny::tabPanel(
+            title = "Bar Chart", 
+            
+            shiny::wellPanel(
+              style = "background: #F0F0F0", 
+              echarts4r::echarts4rOutput(
+                outputId = "bar_chart_2"
+              )
+            ), 
+            
+            shiny::p("By default, last 4 months are shown; to change this, move the slider below the chart.")
+            
+          ), 
+          
+          shiny::tabPanel(
+            title = "Calendar", 
+            
+            shiny::wellPanel(
+              style = "background: #F0F0F0", 
+              echarts4r::echarts4rOutput(
+                outputId = "calendar_heatmap"
+              )
+            )
+            
+          )
+          
         )
         
       )
@@ -138,7 +265,7 @@ ui <- shiny::navbarPage(
                   new_positive_tests, 
                   new_deaths
                 )
-              )%>% 
+              ) %>% 
               colnames() %>% 
               stringr::str_replace_all("_", " ") %>% 
               tools::toTitleCase(), 
@@ -187,86 +314,6 @@ ui <- shiny::navbarPage(
           ), 
           
           shiny::p("By default, last 4 months are shown; to change this, move the slider below the chart.")
-          
-        )
-        
-      )
-      
-    ), 
-    
-    shiny::hr(), 
-    
-    # Filters & Graphs - Non-Cumulative ----
-    shiny::fluidRow(
-      
-      shiny::column(
-        
-        width = 3, 
-        
-        shiny::wellPanel(
-          
-          shiny::h2("Choose Metric to Display in the Chart"), 
-          
-          shiny::selectInput(
-            inputId = "select_var_2", 
-            label = "Select Non-Cumulative Metric", 
-            choices = df %>% 
-              dplyr::select(
-                new_cases, 
-                new_confirmed_cases, 
-                new_people_tested, 
-                new_tests, 
-                new_positive_tests, 
-                new_deaths
-              )%>% 
-              colnames() %>% 
-              stringr::str_replace_all("_", " ") %>% 
-              tools::toTitleCase(), 
-            selected = "New Cases", 
-            multiple = FALSE
-          ),
-          
-          shiny::br(), 
-          
-          shiny::uiOutput(outputId = "defs_ui_2")
-          
-        )
-        
-      ), 
-      
-      shiny::column(
-        
-        width = 9, 
-        
-        shiny::h3("Non-Cumulative Statistics"), 
-        
-        shiny::tabsetPanel(
-          
-          shiny::tabPanel(
-            title = "Calendar", 
-            
-            shiny::wellPanel(
-              style = "background: #F0F0F0", 
-              echarts4r::echarts4rOutput(
-                outputId = "calendar_heatmap"
-              )
-            )
-            
-          ), 
-          
-          shiny::tabPanel(
-            title = "Bar Chart", 
-            
-            shiny::wellPanel(
-              style = "background: #F0F0F0", 
-              echarts4r::echarts4rOutput(
-                outputId = "bar_chart_2"
-              )
-            ), 
-            
-            shiny::p("By default, last 4 months are shown; to change this, move the slider below the chart.")
-            
-          )
           
         )
         

@@ -35,13 +35,17 @@ df <- RSocrata::read.socrata(
   )
 )
 
+
+
 vax_data <- RSocrata::read.socrata(
   url = glue::glue(
     "https://data.ct.gov/resource/gngw-ukpw.csv?", 
     "Town=Ellington&", 
     "$select=age_group, fully_vaccinated_percent, dateupdated"
   )
-)
+) %>% 
+  dplyr::mutate(dateupdated = as.Date(dateupdated)) %>% 
+  dplyr::filter(dateupdated == max(dateupdated))
 
 
 
