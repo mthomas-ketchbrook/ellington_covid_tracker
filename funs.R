@@ -1,20 +1,80 @@
+
+
+
+get_case_data <- function() {
+  
+  df_cols <- paste(
+    "lastupdatedate", 
+    "towntotalcases", 
+    "townconfirmedcases", 
+    "towntotaldeaths", 
+    "peopletested", 
+    "numberoftests", 
+    "numberofpositives", 
+    "numberofnegatives", 
+    sep = ", "
+  )
+  
+  df <- RSocrata::read.socrata(
+    url = glue::glue(
+      "https://data.ct.gov/resource/28fr-iqnx.csv?", 
+      "town=Ellington&",   # filter for Ellington
+      "$select={df_cols}"   # select only desired columns
+    )
+  )
+  
+  df %>% 
+    dplyr::mutate(lastupdatedate = as.Date(lastupdatedate)) %>% 
+    dplyr::rename(
+      date = lastupdatedate, 
+      total_cases = towntotalcases, 
+      confirmed_cases = townconfirmedcases, 
+      total_deaths = towntotaldeaths, 
+      people_tested = peopletested, 
+      number_of_tests = numberoftests, 
+      number_of_positives = numberofpositives, 
+      number_of_negatives = numberofnegatives
+    ) %>% 
+    dplyr::mutate(
+      new_cases = total_cases - dplyr::lag(total_cases), 
+      new_confirmed_cases = confirmed_cases - dplyr::lag(confirmed_cases), 
+      new_tests = number_of_tests - dplyr::lag(number_of_tests), 
+      new_people_tested = people_tested - dplyr::lag(people_tested), 
+      new_positive_tests = number_of_positives - dplyr::lag(number_of_positives), 
+      new_deaths = total_deaths - dplyr::lag(total_deaths)
+    )
+  
+}
+
+
+get_vax_data <- function() {
+  
+   RSocrata::read.socrata(
+    url = glue::glue(
+      "https://data.ct.gov/resource/gngw-ukpw.csv?", 
+      "Town=Ellington&", 
+      "$select=age_group, fully_vaccinated_percent, dateupdated"
+    )
+  ) %>% 
+    dplyr::mutate(dateupdated = as.Date(dateupdated)) %>% 
+    dplyr::filter(dateupdated == max(dateupdated))
+  
+}
+
+
 generate_calendar_viz <- function(data, var) {
   
   var_name <- var %>% 
     stringr::str_replace_all(" ", "_") %>% 
     stringr::str_to_lower()
   
-  var_sym <- rlang::sym(var_name)
-  
-  var_quo <- rlang::enquo(var_sym)
-  
   max_val <- data %>% 
-    dplyr::pull(!! var_quo) %>% 
+    dplyr::pull(.data[[var_name]]) %>% 
     max()
   
   # calendar heatmap
   data %>% 
-    dplyr::select("date", var_name) %>% 
+    dplyr::select(date, .data[[var_name]]) %>% 
     tidyr::drop_na() %>% 
     echarts4r::e_charts(date) %>% 
     echarts4r::e_calendar(
@@ -47,7 +107,7 @@ generate_bar_chart <- function(data, var) {
   
   # Bar Chart
   data %>% 
-    dplyr::select("date", var_name) %>% 
+    dplyr::select(date, .data[[var_name]]) %>% 
     tidyr::drop_na() %>% 
     echarts4r::e_chart(x = date) %>% 
     echarts4r::e_bar_(serie = var_name, name = var) %>% 
@@ -70,7 +130,7 @@ generate_area_chart <- function(data, var) {
     stringr::str_to_lower()
   
   data %>% 
-    dplyr::select("date", var_name) %>% 
+    dplyr::select(date, .data[[var_name]]) %>% 
     tidyr::drop_na() %>% 
     echarts4r::e_chart(x = date) %>% 
     echarts4r::e_area_(serie = var_name, name = var) %>% 
