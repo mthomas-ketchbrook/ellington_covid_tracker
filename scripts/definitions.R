@@ -1,3 +1,5 @@
+
+
 definitions <- tibble::tibble(
   variable = c(
     "Total Cases", 
@@ -30,3 +32,14 @@ definitions <- tibble::tibble(
     "Difference between most recent day's and prior day's \'Total Deaths\' count."
   )
 )
+
+
+get_definition <- function(var, lookup_tbl) {
+  
+  def <- lookup_tbl %>% 
+    dplyr::filter(variable == var) %>% 
+    dplyr::pull(definition)
+  
+  # shiny::p(def)
+  
+}
