@@ -9,65 +9,15 @@ library(lubridate)
 
 source("funs.R")
 source("scripts/definitions.R")
-source("scripts/get_definition.R")
 
 # token <- readLines("api_token.txt", warn = FALSE)
-
-df_cols <- paste(
-  "lastupdatedate", 
-  "towntotalcases", 
-  "townconfirmedcases", 
-  "towntotaldeaths", 
-  "peopletested", 
-  "numberoftests", 
-  "numberofpositives", 
-  "numberofnegatives", 
-  sep = ", "
-)
-
-df <- RSocrata::read.socrata(
-  url = glue::glue(
-    "https://data.ct.gov/resource/28fr-iqnx.csv?", 
-    # filter for Ellington
-    "town=Ellington&", 
-    # select only desired columns
-    "$select={df_cols}"
-  )
-)
-
 # df <- read.csv("tmp_data.csv")
 
-df <- df %>% 
-  dplyr::mutate(date = as.Date(lastupdatedate)) %>% 
-  dplyr::rename(
-    total_cases = towntotalcases, 
-    confirmed_cases = townconfirmedcases, 
-    total_deaths = towntotaldeaths, 
-    people_tested = peopletested, 
-    number_of_tests = numberoftests, 
-    number_of_positives = numberofpositives, 
-    number_of_negatives = numberofnegatives
-  ) %>% 
-  dplyr::mutate(
-    new_cases = total_cases - dplyr::lag(total_cases), 
-    new_confirmed_cases = confirmed_cases - dplyr::lag(confirmed_cases), 
-    new_tests = number_of_tests - dplyr::lag(number_of_tests), 
-    new_people_tested = people_tested - dplyr::lag(people_tested), 
-    new_positive_tests = number_of_positives - dplyr::lag(number_of_positives), 
-    new_deaths = total_deaths - dplyr::lag(total_deaths)
-  )
+# Load COVID statistics data
+df <- get_case_data()
 
-
-vax_data <- RSocrata::read.socrata(
-  url = glue::glue(
-    "https://data.ct.gov/resource/gngw-ukpw.csv?", 
-    "Town=Ellington&", 
-    "$select=age_group, fully_vaccinated_percent, dateupdated"
-  )
-) %>% 
-  dplyr::mutate(dateupdated = as.Date(dateupdated)) %>% 
-  dplyr::filter(dateupdated == max(dateupdated))
-
+# Load vaccine statistics data
+vax_data <- get_vax_data()
 
 # Create UI
 ui <- shiny::navbarPage(
@@ -189,7 +139,7 @@ ui <- shiny::navbarPage(
           
           shiny::br(), 
           
-          shiny::uiOutput(outputId = "defs_ui_2")
+          shiny::textOutput(outputId = "defs_2")
           
         )
         
@@ -275,7 +225,7 @@ ui <- shiny::navbarPage(
           
           shiny::br(), 
           
-          shiny::uiOutput(outputId = "defs_ui_1")
+          shiny::textOutput(outputId = "defs_1")
           
         )
         
@@ -402,7 +352,7 @@ server <- function(input, output, session) {
   })
   
   # Build the cumulative definitions
-  output$defs_ui_1 <- shiny::renderUI({
+  output$defs_1 <- shiny::renderText({
     
     get_definition(
       var = input$select_var_1, 
@@ -412,7 +362,7 @@ server <- function(input, output, session) {
   })
   
   # Build the non-cumulative definitions
-  output$defs_ui_2 <- shiny::renderUI({
+  output$defs_2 <- shiny::renderText({
     
     get_definition(
       var = input$select_var_2, 
@@ -420,8 +370,6 @@ server <- function(input, output, session) {
     )
     
   })
-  
-  
   
 }
 
