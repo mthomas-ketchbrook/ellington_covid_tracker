@@ -44,57 +44,7 @@ ui <- shiny::navbarPage(
     
     shiny::fluidRow(
       
-      shiny::column(
-        
-        width = 3, 
-        
-        create_info_card(
-          header = paste0("Age Group: ", vax_data$age_group[4]), 
-          main = paste0(vax_data$fully_vaccinated_percent[4], "%"), 
-          subtext = "of residents fully vaccinated", 
-          fill = "#D9534F"
-        )
-        
-      ), 
-      
-      shiny::column(
-        
-        width = 3, 
-        
-        create_info_card(
-          header = paste0("Age Group: ", vax_data$age_group[3]), 
-          main = paste0(vax_data$fully_vaccinated_percent[3], "%"), 
-          subtext = "of residents fully vaccinated", 
-          fill = "#D9534F"
-        )
-        
-      ), 
-      
-      shiny::column(
-        
-        width = 3, 
-        
-        create_info_card(
-          header = paste0("Age Group: ", vax_data$age_group[2]), 
-          main = paste0(vax_data$fully_vaccinated_percent[2], "%"), 
-          subtext = "of residents fully vaccinated", 
-          fill = "#D9534F"
-        )
-        
-      ), 
-      
-      shiny::column(
-        
-        width = 3, 
-        
-        create_info_card(
-          header = paste0("Age Group: ", vax_data$age_group[1]), 
-          main = paste0(vax_data$fully_vaccinated_percent[1], "%"), 
-          subtext = "of residents fully vaccinated", 
-          fill = "#D9534F"
-        )
-        
-      )
+      display_info_cards(data = vax_data)
       
     ), 
     

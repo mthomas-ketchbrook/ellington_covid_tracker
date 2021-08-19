@@ -162,3 +162,24 @@ create_info_card <- function(header, main, subtext, fill = NULL) {
   )
   
 }
+
+display_info_cards <- function(data) {
+  
+  data %>% 
+    dplyr::mutate(id = 1:nrow(data)) %>% 
+    split(.$id) %>% 
+    purrr::map(.f = function(x) shiny::tagList(
+      shiny::column(
+        width = 12 %/% nrow(data), 
+        create_info_card(
+          header = paste0("Age Group: ", x$age_group), 
+          main = paste0(x$fully_vaccinated_percent, "%"), 
+          subtext = "of residents fully vaccinated", 
+          fill = "#D9534F"
+        )
+      )
+    )) %>% 
+    shiny::tagList()
+  
+}
+
